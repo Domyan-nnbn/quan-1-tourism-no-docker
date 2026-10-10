@@ -1,0 +1,10 @@
+export type Locale = 'vi' | 'en';
+export type NarrationLocale = 'vi' | 'en' | 'zh' | 'fr' | 'ja';
+export type Scripts = Record<NarrationLocale, string>;
+export type Category = 'heritage' | 'culture' | 'landmark' | 'food' | 'nature';
+export type Source = { type?: string; url?: string; revision_url?: string; revision_id?: number; license?: string; notice?: string; is_modified?: boolean };
+export type Draft = Scripts & { id: string; state: string; source: Source; created_at: string };
+export type POI = { id: string; name: string; name_en: string; category: Category; address: string; latitude: number; longitude: number; radius: number; source_url: string; published_version: string | null; content: Scripts & { source: Source; version: string } | null; drafts?: Draft[] };
+export type Position = { latitude: number; longitude: number; accuracy?: number | null };
+export type Job = { id: string; poi_id: string; state: string; attempts: number; error: string; content_id: string | null };
+export type Manifest = { schema: number; version: string; generated_at: string; pois: POI[]; audio_mode: string; map_offline: boolean };

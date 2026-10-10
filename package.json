@@ -1,0 +1,21 @@
+{
+  "name": "quan-1-tourism",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "install:apps": "npm ci --prefix mobile",
+    "start": "npm start --prefix mobile",
+    "check": "npm run typecheck --prefix mobile && npm test --prefix mobile",
+    "install:backend": "node scripts/backend.mjs install",
+    "db:init": "node scripts/backend.mjs seed",
+    "backend": "node scripts/backend.mjs api",
+    "worker": "node scripts/backend.mjs worker",
+    "admin:reset": "node scripts/backend.mjs reset",
+    "db:migrate": "node scripts/backend.mjs migrate",
+    "db:demo-translations": "node scripts/backend.mjs translations"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  }
+}
