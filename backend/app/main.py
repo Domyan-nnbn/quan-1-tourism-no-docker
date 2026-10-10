@@ -12,9 +12,9 @@ from sqlalchemy import select, func, text, delete
 from sqlalchemy.exc import IntegrityError
 from .config import settings
 from .db import get_db, engine
-from .models import Admin, POI, Content, Job, Consent, Event, Audit, now
-from .schemas import Login, POIInput, DraftInput, ConsentInput, EventInput
-from .security import require_admin, passwords, token_for
+from .models import Admin, POI, Content, Job, Consent, Event, Audit, User, Favorite, now
+from .schemas import Login, POIInput, DraftInput, ConsentInput, EventInput, Register
+from .security import require_admin, require_user, passwords, verify_password, create_session, current_session, account_info
 
 app = FastAPI(title='QUAN 1 TOURISM API', version='1.0.0')
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins.split(','), allow_methods=['GET','POST','PUT','DELETE'], allow_headers=['Authorization','Content-Type','Idempotency-Key','X-Consent-Token'])
@@ -39,17 +39,69 @@ def ready(db=Depends(get_db)):
     return {'status':'ready','database':'postgresql'}
 
 attempts = defaultdict(deque)
+def throttle(request, kind):
+    key = (kind, request.client.host if request.client else 'local')
+    now_m = monotonic()
+    # Bound idle IP entries in this single-process pilot.
+    for old_key in list(attempts):
+        if not attempts[old_key] or attempts[old_key][-1] < now_m-60: del attempts[old_key]
+    times = attempts[key]
+    while times and times[0] < now_m-60: times.popleft()
+    if len(times)>=10: raise HTTPException(429,'Too many attempts; wait one minute / Thử lại sau một phút')
+    times.append(now_m)
+
 @app.post('/api/v1/auth/login')
 def login(body: Login, request: Request, db=Depends(get_db)):
-    key = request.client.host if request.client else 'local'
-    times = attempts[key]
-    while times and times[0] < monotonic()-60: times.popleft()
-    if len(times)>=10: raise HTTPException(429,'Too many login attempts; wait one minute')
-    times.append(monotonic())
+    throttle(request, 'admin')
     admin = db.scalar(select(Admin).where(Admin.email==body.email.lower().strip()))
-    if not admin or not passwords.verify(body.password, admin.password_hash):
-        raise HTTPException(401,'Email or password is incorrect')
-    return {'access_token':token_for(admin),'token_type':'bearer'}
+    if not verify_password(body.password, admin.password_hash if admin else None):
+        raise HTTPException(401,'Email or password is incorrect / Email hoặc mật khẩu không đúng')
+    result=create_session(db,admin,'admin');db.commit();return result
+
+@app.post('/api/v1/user-auth/register',status_code=201)
+def register(body: Register, request: Request, db=Depends(get_db)):
+    throttle(request, 'register')
+    from sqlalchemy.dialects.postgresql import insert
+    user_id=db.scalar(insert(User).values(email=body.email,name=body.name,
+        password_hash=passwords.hash(body.password)).on_conflict_do_nothing(index_elements=['email']).returning(User.id))
+    if not user_id: raise HTTPException(409,'Email already registered / Email đã được đăng ký')
+    user=db.get(User,user_id)
+    result=create_session(db,user,'user');db.commit();return result
+
+@app.post('/api/v1/user-auth/login')
+def user_login(body: Login, request: Request, db=Depends(get_db)):
+    throttle(request, 'user')
+    user=db.scalar(select(User).where(User.email==body.email.lower().strip()))
+    if not verify_password(body.password,user.password_hash if user else None):
+        raise HTTPException(401,'Email or password is incorrect / Email hoặc mật khẩu không đúng')
+    result=create_session(db,user,'user');db.commit();return result
+
+@app.get('/api/v1/session/me')
+def me(session=Depends(current_session),db=Depends(get_db)):
+    account=db.get(User,session.user_id) if session.role=='user' else db.get(Admin,session.admin_id)
+    if not account: raise HTTPException(401,'Account not found')
+    return account_info(account,session.role)
+
+@app.post('/api/v1/session/logout',status_code=204)
+def logout(session=Depends(current_session),db=Depends(get_db)):
+    db.delete(session);db.commit()
+
+@app.get('/api/v1/users/me/favorites')
+def favorites(user=Depends(require_user),db=Depends(get_db)):
+    return list(db.scalars(select(Favorite.poi_id).join(POI,POI.id==Favorite.poi_id).where(
+        Favorite.user_id==user.id,POI.archived==False,POI.published_version!=None).order_by(Favorite.created_at)))
+
+@app.put('/api/v1/users/me/favorites/{poi_id}',status_code=204)
+def add_favorite(poi_id:str,user=Depends(require_user),db=Depends(get_db)):
+    from sqlalchemy.dialects.postgresql import insert
+    p=poi_or_404(db,poi_id)
+    if not p.published_version: raise HTTPException(404,'POI not published')
+    db.execute(insert(Favorite).values(user_id=user.id,poi_id=poi_id).on_conflict_do_nothing())
+    db.commit()
+
+@app.delete('/api/v1/users/me/favorites/{poi_id}',status_code=204)
+def remove_favorite(poi_id:str,user=Depends(require_user),db=Depends(get_db)):
+    db.execute(delete(Favorite).where(Favorite.user_id==user.id,Favorite.poi_id==poi_id));db.commit()
 
 def poi_or_404(db, id):
     poi=db.get(POI,id)

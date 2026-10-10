@@ -2,6 +2,8 @@
 
 React Native + Expo Go SDK 57 · FastAPI · PostgreSQL cài trên Windows.
 
+**Bản tài khoản mới: đọc `docs/UPDATE_ACCOUNTS.md`. Có đăng ký/user/admin, yêu thích theo tài khoản và cảnh báo xa Quận 1. Chạy `npm.cmd run db:accounts` khi nâng cấp.**
+
 **Nếu bạn đã chạy bản cũ: đọc `docs/UPDATE_5_LANGUAGES.md` trước. Chạy `npm.cmd run db:migrate` để thêm cột; không cần tạo lại database.**
 
 ## 1. Chuẩn bị
@@ -30,7 +32,7 @@ Ghi nhớ user/password PostgreSQL bạn đã đặt lúc cài. Tài khoản th�
 Mở thư mục dự án trong VS Code → Terminal:
 
 ```powershell
-npm run setup
+npm.cmd run setup
 ```
 
 Mở file **backend/.env**, thay `CHANGE_ME` bằng mật khẩu PostgreSQL:
@@ -48,9 +50,9 @@ Giữ nguyên JWT_SECRET và ADMIN_PASSWORD do script sinh. Nếu user/port khá
 Tại thư mục gốc dự án:
 
 ```powershell
-npm run install:backend
-npm run install:apps
-npm run db:init
+npm.cmd run install:backend
+npm.cmd run install:apps
+npm.cmd run db:init
 ```
 
 Script tự tạo `backend/.venv`, dùng Python trong venv để cài packages. Không cần activate venv. Database được tạo bảng và nạp đúng 20 địa điểm minh họa. Chạy db:init lại không nhân đôi dữ liệu.
@@ -62,7 +64,7 @@ Cả ba terminal đều đứng ở **thư mục gốc dự án**.
 **Terminal 1 — backend:**
 
 ```powershell
-npm run backend
+npm.cmd run backend
 ```
 
 Kiểm tra trên máy tính: `http://localhost:8000/health/ready` phải có `status: ready`.
@@ -70,13 +72,13 @@ Kiểm tra trên máy tính: `http://localhost:8000/health/ready` phải có `st
 **Terminal 2 — worker nhập Wikipedia:**
 
 ```powershell
-npm run worker
+npm.cmd run worker
 ```
 
 **Terminal 3 — ứng dụng Expo:**
 
 ```powershell
-npm start
+npm.cmd start
 ```
 
 Quét QR bằng Expo Go. iPhone có thể dùng Camera để mở QR.
@@ -90,17 +92,17 @@ Quét QR bằng Expo Go. iPhone có thể dùng Camera để mở QR.
 
 **Không nhập localhost trên điện thoại**: localhost là chính điện thoại. Chỉ backend trên PC dùng localhost để truy cập PostgreSQL.
 
-Nếu cần sửa mặc định, chỉnh `mobile/.env`, sau đó chạy lại Expo. `npm run setup -- 192.168.1.10` chỉ đặt IP lúc tạo file lần đầu; nếu file đã có, sửa trực tiếp.
+Nếu cần sửa mặc định, chỉnh `mobile/.env`, sau đó chạy lại Expo. `npm.cmd run setup -- 192.168.1.10` chỉ đặt IP lúc tạo file lần đầu; nếu file đã có, sửa trực tiếp.
 
 Nếu health trên điện thoại không mở được: kiểm tra backend, mạng Wi-Fi guest/client isolation và cho phép Python trên mạng Private trong Windows Firewall. Không cần mở PostgreSQL port ra điện thoại. Expo tunnel không tự tunnel API backend.
 
 ## 7. Đăng nhập quản trị
 
-Cài đặt → Quản trị nội dung:
+Cài đặt → Tài khoản → Đăng nhập / Đăng ký → Đăng nhập dành cho admin:
 - Email: `admin@quan1.local`.
 - Password: giá trị **ADMIN_PASSWORD** trong `backend/.env`.
 
-Đổi giá trị ADMIN_PASSWORD sau khi đã seed thì chạy `npm run admin:reset` để cập nhật hash tài khoản. Token cũ có thể còn hiệu lực tới 8 giờ.
+Đổi giá trị ADMIN_PASSWORD sau khi đã seed thì chạy `npm.cmd run admin:reset` để cập nhật hash tài khoản. Các phiên admin cũ được thu hồi ngay khi reset thành công.
 
 Luồng quản trị:
 1. Tạo/sửa POI và tọa độ/bán kính, lưu.
@@ -114,7 +116,7 @@ API Swagger: `http://localhost:8000/docs`. Bảng SQL: `docs/schema.sql`.
 
 ## Chức năng và giới hạn
 
-- Giao diện tối giản chỉ Việt/Anh; thuyết minh độc lập Việt/Anh/Trung/Pháp/Nhật; bản đồ, tìm kiếm, bộ lọc, yêu thích.
+- Giao diện tối giản chỉ Việt/Anh; thuyết minh độc lập Việt/Anh/Trung/Pháp/Nhật; bản đồ, tìm kiếm, bộ lọc, yêu thích theo từng tài khoản PostgreSQL.
 - GPS foreground, tự chọn POI gần nhất, debounce 3s và cooldown 5 phút.
 - Thuyết minh bằng giọng có trên thiết bị, có dừng và đổi tốc độ.
 - Tải văn bản/tọa độ offline. Giọng offline phụ thuộc voice đã cài. Bản đồ vẫn cần mạng.
@@ -135,7 +137,7 @@ API Swagger: `http://localhost:8000/docs`. Bảng SQL: `docs/schema.sql`.
 | SDK incompatible | Expo Go phải hỗ trợ SDK 57; không nâng riêng React Native tùy ý |
 | iPhone không có tiếng | Tắt silent mode, tăng media volume, kiểm tra voice Việt/Anh |
 | GPS không tự đọc | Cấp quyền, bật tự động, mở app, vào đúng radius; GPS accuracy phải ≤50m |
-| Job đứng PENDING | Mở terminal worker bằng `npm run worker` |
+| Job đứng PENDING | Mở terminal worker bằng `npm.cmd run worker` |
 | Job FAILED | Kiểm tra URL Wikipedia/mạng, thử lại hoặc nhập thủ công |
 | Admin 401 | Đăng xuất/đăng nhập lại |
 
@@ -144,10 +146,10 @@ Dừng tiến trình bằng Ctrl+C trong từng terminal. Dữ liệu PostgreSQL
 ## Kiểm thử và tài liệu
 
 ```powershell
-npm run check
+npm.cmd run check
 cd mobile
-npx expo install --check
-npx expo export --platform android --platform ios
+npx.cmd expo install --check
+npx.cmd expo export --platform android --platform ios
 ```
 
 Backend tests cần database riêng kết thúc `_test` vì sẽ xóa bảng trong database đó:

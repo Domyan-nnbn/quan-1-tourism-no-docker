@@ -13,7 +13,8 @@
     "worker": "node scripts/backend.mjs worker",
     "admin:reset": "node scripts/backend.mjs reset",
     "db:migrate": "node scripts/backend.mjs migrate",
-    "db:demo-translations": "node scripts/backend.mjs translations"
+    "db:demo-translations": "node scripts/backend.mjs translations",
+    "db:accounts": "node scripts/backend.mjs accounts"
   },
   "engines": {
     "node": ">=22.13.0"

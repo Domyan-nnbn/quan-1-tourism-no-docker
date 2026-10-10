@@ -48,3 +48,22 @@ class EventInput(BaseModel):
     poi_id: UUID
     kind: Literal['narration_started','narration_completed']
     locale: Literal['vi','en','zh','fr','ja']
+
+class Register(BaseModel):
+    name: str = Field(min_length=1,max_length=100)
+    email: str = Field(min_length=3,max_length=254)
+    password: str = Field(min_length=8,max_length=200)
+
+    @field_validator('name')
+    @classmethod
+    def clean_name(cls,v):
+        if not v.strip(): raise ValueError('Name cannot be blank')
+        return v.strip()
+
+    @field_validator('email')
+    @classmethod
+    def clean_email(cls,v):
+        import re
+        v=v.strip().lower()
+        if not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+',v): raise ValueError('Invalid email')
+        return v

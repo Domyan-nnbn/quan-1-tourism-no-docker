@@ -18,7 +18,7 @@
 | UC03 ngôn ngữ | UI du khách + kịch bản Việt/Anh. UI quản trị dùng tiếng Việt |
 | UC04 offline | Tải manifest văn bản + tọa độ + version, checksum chống lỗi dữ liệu cục bộ; không có offline tiles/MP3/PMTiles. Giọng offline tùy máy |
 | UC05 consent | SecureStore token, kiểm tra consent phía server, thu hồi xóa sự kiện; không lưu GPS |
-| UC06 quản trị POI | Tạo, sửa, lưu trữ, radius validation, đăng nhập JWT |
+| UC06 quản trị POI | Tạo, sửa, lưu trữ, radius validation, phiên đăng nhập có thể thu hồi |
 | UC07 nguồn Wikipedia | Chỉ nhận HTTPS vi/en Wikipedia, không redirect tùy ý |
 | UC08 khởi tạo workflow | Tạo tác vụ nhập Wikipedia trả 202; idempotency key |
 | UC09 duyệt/edit | Bản nháp version mới, duyệt cả Việt/Anh; không đè published version |

@@ -3,7 +3,7 @@
 Các mục này chưa được tự động xác nhận trên điện thoại trong môi trường tạo mã.
 
 1. Cùng Wi-Fi với backend; mở /health/ready bằng trình duyệt điện thoại.
-2. Quét Expo QR, thấy 20 POI, tìm “Bến Thành”, lọc danh mục và lưu yêu thích.
+2. Quét Expo QR, thấy 20 POI, tìm “Bến Thành”, lọc danh mục; đăng ký/đăng nhập user để lưu yêu thích.
 3. Đổi tiếng Anh: UI du khách và bài đọc thay đổi. Yêu thích còn khi khởi động lại.
 4. Chọn một POI, đọc Việt/Anh, dừng ngay; kiểm tra tốc độ, silent mode iOS.
 5. Từ chối quyền vị trí: app vẫn cho xem/đọc; cấp quyền rồi bản đồ hiện vị trí thật.
@@ -17,3 +17,5 @@ Các mục này chưa được tự động xác nhận trên điện thoại tr
 13. Import Wikipedia: state PENDING → PROCESSING → COMPLETED, content dừng DRAFT; mất mạng thì retry/FAILED.
 14. Logout: màn hình quản trị yêu cầu đăng nhập lại.
 15. Kiểm tra text scaling, màn hình nhỏ và nút bấm, thông báo lỗi khi API tắt.
+
+Kiểm tra tài khoản A/B, admin và cảnh báo xa theo `UPDATE_ACCOUNTS.md`.

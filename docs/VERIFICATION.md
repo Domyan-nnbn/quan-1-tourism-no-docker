@@ -40,3 +40,15 @@ PGlite không thay thế kiểm tra PostgreSQL native, đa worker hoặc tải �
 - Khởi tạo 20 POI mới có đủ vi/en/zh/fr/ja; seed chạy hai lần không nhân đôi.
 - Export Android/iOS: thành công.
 - Chưa kiểm thử đủ 5 giọng trên điện thoại thật. Bản dịch là nội dung demo, cần người biết ngôn ngữ kiểm duyệt trước production.
+
+## Cập nhật tài khoản — 10/10/2026
+
+- TypeScript: đạt; 12/12 unit tests mobile đạt (geofence, ngôn ngữ, tự nhận API, cảnh báo xa và GPS không đủ chính xác).
+- Backend: 13/13 integration tests đạt trên PGlite/PostgreSQL WASM qua psycopg.
+- Kiểm tra đăng ký, chuẩn hóa email, email trùng, password hash Argon2; không nâng quyền qua payload đăng ký.
+- Kiểm tra user không vào được admin; admin không dùng API yêu thích user; không xác thực bị từ chối.
+- Hai tài khoản A/B có yêu thích riêng; thao tác lặp không nhân đôi; đăng nhập lại lấy đúng yêu thích; B không xóa được yêu thích A.
+- Token logout không dùng lại được; token hết hạn bị từ chối; giới hạn thử đăng nhập hoạt động.
+- Migration chạy lại được; bổ sung ba bảng vào database kiểu cũ và giữ nguyên thuyết minh.
+- Metro export Android/iOS tạo bundle Hermes thành công.
+- Chưa thao tác trên điện thoại thật hoặc PostgreSQL Windows của người dùng. Checklist trong UPDATE_ACCOUNTS.md.

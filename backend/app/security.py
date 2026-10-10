@@ -1,24 +1,49 @@
+import hashlib
+import secrets
 from datetime import timedelta
-import jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pwdlib import PasswordHash
-from .config import settings
 from .db import get_db
-from .models import Admin, now
+from .models import Admin, User, AuthSession, now
 
 passwords = PasswordHash.recommended()
 bearer = HTTPBearer(auto_error=False)
+# Equal-cost password verification even for unknown accounts.
+dummy_hash = passwords.hash(secrets.token_urlsafe(32))
 
-def token_for(admin):
-    return jwt.encode({'sub': admin.id, 'role':'admin', 'exp': now()+timedelta(hours=8), 'iat':now()}, settings.jwt_secret, algorithm='HS256')
+def verify_password(password, stored_hash):
+    valid = passwords.verify(password, stored_hash or dummy_hash)
+    return bool(stored_hash) and valid
 
-def require_admin(credentials: HTTPAuthorizationCredentials | None = Depends(bearer), db=Depends(get_db)):
-    try:
-        if credentials is None: raise ValueError()
-        data = jwt.decode(credentials.credentials, settings.jwt_secret, algorithms=['HS256'])
-        admin = db.get(Admin, data['sub'])
-        if data.get('role') != 'admin' or not admin: raise ValueError()
-        return admin
-    except (jwt.PyJWTError, ValueError, KeyError):
-        raise HTTPException(401, 'Please sign in as administrator')
+def create_session(db, account, role):
+    token = secrets.token_urlsafe(48)
+    session = AuthSession(id=hashlib.sha256(token.encode()).hexdigest(), role=role,
+        user_id=account.id if role == 'user' else None,
+        admin_id=account.id if role == 'admin' else None,
+        expires_at=now()+timedelta(hours=8 if role == 'admin' else 24*30))
+    db.add(session)
+    return {'access_token':token, 'token_type':'bearer', 'expires_at':session.expires_at.isoformat(),
+            'account':account_info(account,role)}
+
+def account_info(account, role):
+    return {'id':account.id, 'email':account.email, 'name':account.name if role=='user' else 'Admin', 'role':role}
+
+def current_session(credentials: HTTPAuthorizationCredentials | None = Depends(bearer), db=Depends(get_db)):
+    if credentials is None: raise HTTPException(401,'Please sign in / Vui lòng đăng nhập')
+    session = db.get(AuthSession, hashlib.sha256(credentials.credentials.encode()).hexdigest())
+    if not session or session.expires_at <= now():
+        raise HTTPException(401,'Session expired; please sign in / Phiên hết hạn, hãy đăng nhập lại')
+    return session
+
+def require_admin(session=Depends(current_session), db=Depends(get_db)):
+    if session.role != 'admin': raise HTTPException(403,'Administrator access required')
+    account = db.get(Admin,session.admin_id)
+    if not account: raise HTTPException(401,'Account not found')
+    return account
+
+def require_user(session=Depends(current_session), db=Depends(get_db)):
+    if session.role != 'user': raise HTTPException(403,'User account required')
+    account = db.get(User,session.user_id)
+    if not account: raise HTTPException(401,'Account not found')
+    return account

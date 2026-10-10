@@ -124,3 +124,27 @@ CREATE INDEX ix_jobs_poi_id ON jobs (poi_id);
 CREATE INDEX ix_jobs_state ON jobs (state);
 
 ALTER TABLE pois ADD CONSTRAINT fk_poi_published_version FOREIGN KEY(published_version) REFERENCES content_versions (id);
+-- Accounts extension. Existing installations use npm.cmd run db:accounts instead.
+CREATE TABLE users (
+ id VARCHAR(36) PRIMARY KEY,
+ email VARCHAR(254) NOT NULL UNIQUE,
+ name VARCHAR(100) NOT NULL,
+ password_hash TEXT NOT NULL,
+ created_at TIMESTAMP WITH TIME ZONE NOT NULL
+);
+CREATE TABLE auth_sessions (
+ id VARCHAR(64) PRIMARY KEY,
+ role VARCHAR(10) NOT NULL,
+ user_id VARCHAR(36) REFERENCES users(id) ON DELETE CASCADE,
+ admin_id VARCHAR(36) REFERENCES admins(id) ON DELETE CASCADE,
+ expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+ CHECK ((role='user' AND user_id IS NOT NULL AND admin_id IS NULL) OR
+        (role='admin' AND admin_id IS NOT NULL AND user_id IS NULL))
+);
+CREATE INDEX ix_auth_sessions_expires_at ON auth_sessions(expires_at);
+CREATE TABLE favorites (
+ user_id VARCHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+ poi_id VARCHAR(36) NOT NULL REFERENCES pois(id) ON DELETE CASCADE,
+ created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+ PRIMARY KEY(user_id,poi_id)
+);

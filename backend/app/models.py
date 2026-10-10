@@ -80,3 +80,26 @@ class Audit(Base):
     action: Mapped[str] = mapped_column(String(50))
     target: Mapped[str] = mapped_column(String(36))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+class User(Base):
+    __tablename__ = 'users'
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    email: Mapped[str] = mapped_column(String(254), unique=True)
+    name: Mapped[str] = mapped_column(String(100))
+    password_hash: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+class AuthSession(Base):
+    __tablename__ = 'auth_sessions'
+    __table_args__ = (CheckConstraint("(role = 'user' AND user_id IS NOT NULL AND admin_id IS NULL) OR (role = 'admin' AND admin_id IS NOT NULL AND user_id IS NULL)"),)
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)  # SHA256 of opaque token
+    role: Mapped[str] = mapped_column(String(10))
+    user_id: Mapped[str | None] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
+    admin_id: Mapped[str | None] = mapped_column(ForeignKey('admins.id', ondelete='CASCADE'), nullable=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+
+class Favorite(Base):
+    __tablename__ = 'favorites'
+    user_id: Mapped[str] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
+    poi_id: Mapped[str] = mapped_column(ForeignKey('pois.id', ondelete='CASCADE'), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
