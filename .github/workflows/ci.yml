@@ -2,11 +2,13 @@ name: Quality checks
 on:
   push:
   pull_request:
+  workflow_call:
 permissions:
   contents: read
 jobs:
   mobile:
-    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: mobile
@@ -19,28 +21,30 @@ jobs:
           cache-dependency-path: mobile/package-lock.json
       - run: npm ci
       - run: npm run typecheck
-      - run: npm test
+      - name: Mobile tests with report
+        run: |
+          mkdir -p reports
+          node --import tsx --test --test-reporter=junit src/*.test.ts > reports/mobile-junit.xml
       - run: npx expo install --check
       - run: npx expo export --platform android --platform ios
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-checks-${{ github.sha }}
+          path: |
+            mobile/reports/
+            mobile/dist/metadata.json
+          if-no-files-found: warn
+          retention-days: 30
   backend:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:17-alpine
-        env:
-          POSTGRES_DB: tourism_test
-          POSTGRES_USER: tourism
-          POSTGRES_PASSWORD: ci-test-password
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U tourism -d tourism_test"
-          --health-interval 5s --health-timeout 3s --health-retries 10
+    timeout-minutes: 20
+    runs-on: ubuntu-24.04
     env:
       DATABASE_URL: postgresql+psycopg://tourism:ci-test-password@localhost:5432/tourism_test
       JWT_SECRET: ci-only-secret-012345678901234567890123456789
       ADMIN_PASSWORD: integration-test-only-password
       SEED_DEMO: 'false'
+      NATIVE_POSTGRES: '1'
     defaults:
       run:
         working-directory: backend
@@ -50,5 +54,21 @@ jobs:
         with:
           python-version: '3.12'
           cache: pip
+      - name: Start native PostgreSQL (no Docker)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql
+          sudo systemctl start postgresql
+          sudo -u postgres psql -v ON_ERROR_STOP=1 -c "CREATE USER tourism PASSWORD 'ci-test-password';"
+          sudo -u postgres createdb -O tourism tourism_test
       - run: pip install -r requirements.lock
-      - run: python -m pytest -q
+      - run: python -m pytest -q --junitxml=reports/backend-junit.xml
+      - name: Export API contract
+        run: python ../scripts/export_openapi.py reports/openapi.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-checks-${{ github.sha }}
+          path: backend/reports/
+          if-no-files-found: warn
+          retention-days: 30

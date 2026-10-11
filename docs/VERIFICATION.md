@@ -1,3 +1,5 @@
+> Kết quả hiện tại: [VERIFICATION_STABILITY.md](VERIFICATION_STABILITY.md). Các kết quả phía dưới là lịch sử trước bản 1.3; endpoint offline manifest đã bị xóa.
+
 # Kết quả kiểm tra bản bàn giao
 
 Ngày: 10/10/2026. Đây là kết quả thực hiện khi tạo bộ mã nguồn, không phải kết quả test điện thoại của người dùng.

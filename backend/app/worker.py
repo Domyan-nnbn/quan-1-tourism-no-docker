@@ -30,27 +30,53 @@ def fetch_wikipedia(url):
         return plain, {'url':url,'title':page['title'],'article_id':page['pageid'],'revision_id':revision,'revision_url':f'https://{u.netloc}/w/index.php?oldid={revision}','retrieved_at':now().isoformat(),'content_hash':hashlib.sha256(plain.encode()).hexdigest(),'source_language':u.netloc[:2],'license':'CC BY-SA 4.0','is_modified':True,'type':'wikipedia_excerpt'}
 
 def run_once():
-    with Session.begin() as db:
-        # Recover jobs after a killed worker. Network timeout bounds processing to <2min.
-        db.execute(update(Job).where(Job.state=='PROCESSING',Job.updated_at<now()-timedelta(minutes=5)).values(state='RETRY_PENDING',updated_at=now()))
-        candidates=select(Job).where(Job.state.in_(['PENDING','RETRY_PENDING']),Job.updated_at<=now()).order_by(Job.created_at).with_for_update(skip_locked=True).limit(1)
-        j=db.scalar(candidates)
-        if not j:return False
-        j.state='PROCESSING';j.attempts+=1;j.updated_at=now();jid=j.id;url=j.source_url;attempt=j.attempts
+    from .repositories import queue
+    from .observability import log_event
+    claim=queue.claim()
+    if not claim:
+        return False
+    started=time.monotonic()
     try:
-        plain,source=fetch_wikipedia(url)
-        with Session.begin() as db:
-            j=db.get(Job,jid)
-            p=db.get(POI,j.poi_id)
-            if not p or p.archived: raise ValueError('POI archived')
-            c=Content(poi_id=j.poi_id,vi=plain if source['source_language']=='vi' else '',en=plain if source['source_language']=='en' else '',source=source)
-            db.add(c);db.flush();j.content_id=c.id;j.state='COMPLETED';j.error='';j.updated_at=now()
+        plain,source=fetch_wikipedia(claim['url'])
+        accepted=queue.complete(claim,plain,source)
+        log_event('job_finished',job_id=claim['id'],attempt=claim['attempt'],accepted=accepted,
+                  duration_ms=round((time.monotonic()-started)*1000,2))
     except Exception as exc:
-        with Session.begin() as db:
-            j=db.get(Job,jid);j.state='FAILED' if attempt>=3 else 'RETRY_PENDING';j.error=f'{type(exc).__name__}: Wikipedia import failed; verify source and network';j.updated_at=now()+timedelta(seconds=2**attempt*5)
+        queue.fail(claim,type(exc).__name__)
+        log_event('job_failed',job_id=claim['id'],attempt=claim['attempt'],error_type=type(exc).__name__)
     return True
 
+def main():
+    import signal
+    from uuid import uuid4
+    from threading import Event
+    from .repositories import queue
+    from .observability import log_event
+    from .migrate import schema_matches, version_matches
+    from .db import engine
+    with engine.connect() as connection:
+        if not version_matches(connection) or not schema_matches(connection):
+            raise RuntimeError('Run python -m app.migrate before starting worker')
+    worker_id=str(uuid4());stop=Event()
+    for sig in (signal.SIGTERM,signal.SIGINT):
+        signal.signal(sig,lambda *_:stop.set())
+    # Heartbeat represents progress through the loop. A stuck fetch becomes unhealthy.
+    # No separate heartbeat thread falsely advertises a hung worker as healthy.
+    log_event('worker_started',worker_id=worker_id)
+    try:
+        while not stop.is_set():
+            queue.heartbeat(worker_id)
+            try:
+                worked=run_once()
+            except Exception as exc:
+                log_event('worker_error',error_type=type(exc).__name__)
+                stop.wait(2)
+                continue
+            if not worked:
+                stop.wait(2)
+    finally:
+        queue.forget_worker(worker_id)
+        log_event('worker_stopped',worker_id=worker_id)
+
 if __name__=='__main__':
-    print('Wikipedia worker started',flush=True)
-    while True:
-        if not run_once(): time.sleep(2)
+    main()

@@ -1,3 +1,4 @@
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -8,6 +9,9 @@ class Settings(BaseSettings):
     admin_password: str
     cors_origins: str = 'http://localhost:8081'
     seed_demo: bool = True
+    worker_required: bool = False
+    worker_stale_seconds: int = Field(default=90, ge=10, le=3600)
+    job_lease_seconds: int = Field(default=120, ge=60, le=3600)
 
 settings = Settings()
 if len(settings.jwt_secret) < 32 or len(settings.admin_password) < 12:

@@ -49,12 +49,19 @@ class Job(Base):
     poi_id: Mapped[str] = mapped_column(ForeignKey('pois.id'), index=True)
     source_url: Mapped[str] = mapped_column(Text)
     key: Mapped[str] = mapped_column(String(200), unique=True)
+    lease_owner: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    lease_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     state: Mapped[str] = mapped_column(String(24), default='PENDING', index=True)
     attempts: Mapped[int] = mapped_column(Integer, default=0)
     error: Mapped[str] = mapped_column(Text, default='')
     content_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+class WorkerHeartbeat(Base):
+    __tablename__ = 'worker_heartbeats'
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
 
 class Consent(Base):
     __tablename__ = 'consents'

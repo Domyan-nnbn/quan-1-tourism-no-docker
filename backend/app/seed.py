@@ -1,3 +1,4 @@
+from .migrate import migrate
 """Original short demonstration scripts, not production Wikipedia content."""
 import json
 from pathlib import Path
@@ -32,7 +33,7 @@ PLACES = [
 ]
 
 def init():
-    Base.metadata.create_all(engine)
+    migrate()
     with Session.begin() as db:
         # Serializes bootstrap on PostgreSQL if API and operator start together.
         db.execute(text('SELECT pg_advisory_xact_lock(7712026)'))

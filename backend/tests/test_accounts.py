@@ -94,3 +94,18 @@ def test_migration_adds_account_tables_to_legacy_database(client):
     with engine.begin() as db:
         assert {'users','favorites','auth_sessions'}.issubset(inspect(db).get_table_names())
         assert db.execute(text('SELECT id,vi,en,zh,fr,ja FROM content_versions ORDER BY id')).all()==before
+
+def test_password_change_revokes_other_sessions_and_preserves_current(client):
+    attempts.clear()
+    result,current=register(client,'change-password@example.test')
+    second=client.post('/api/v1/user-auth/login',json={'email':'change-password@example.test','password':'password123'})
+    assert second.status_code==200
+    old={'Authorization':'Bearer '+second.json()['access_token']}
+    endpoint='/api/v1/session/password'
+    assert client.post(endpoint,headers=current,json={'current_password':'wrong','new_password':'new-password-123'}).status_code==401
+    assert client.get('/api/v1/session/me',headers=current).status_code==200
+    assert client.post(endpoint,headers=current,json={'current_password':'password123','new_password':'new-password-123'}).status_code==200
+    assert client.get('/api/v1/session/me',headers=current).status_code==200
+    assert client.get('/api/v1/session/me',headers=old).status_code==401
+    assert client.post('/api/v1/user-auth/login',json={'email':'change-password@example.test','password':'password123'}).status_code==401
+    assert client.post('/api/v1/user-auth/login',json={'email':'change-password@example.test','password':'new-password-123'}).status_code==200

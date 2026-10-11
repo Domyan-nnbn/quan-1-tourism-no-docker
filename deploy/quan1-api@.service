@@ -1,0 +1,19 @@
+[Unit]
+Description=Quan 1 API (%i)
+After=network-online.target
+Wants=network-online.target
+[Service]
+User=quan1
+Group=quan1
+WorkingDirectory=/opt/quan1-%i/current/backend
+EnvironmentFile=/opt/quan1-%i/shared/backend.env
+ExecStart=/opt/quan1-%i/current/backend/.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port ${API_PORT} --no-access-log
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+Environment=PYTHONDONTWRITEBYTECODE=1
+[Install]
+WantedBy=multi-user.target

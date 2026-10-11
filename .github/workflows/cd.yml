@@ -1,0 +1,92 @@
+name: Release backend without Docker
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        options: [staging, production]
+        default: staging
+        required: true
+      action:
+        type: choice
+        options: [deploy, rollback]
+        default: deploy
+        required: true
+      rollback_sha:
+        description: Full SHA of an existing release (rollback only)
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: release-${{ inputs.environment }}
+  cancel-in-progress: false
+jobs:
+  quality:
+    uses: ./.github/workflows/ci.yml
+  release:
+    timeout-minutes: 30
+    needs: quality
+    runs-on: ubuntu-24.04
+    environment: ${{ inputs.environment }}
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+      PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL }}
+      TARGET_ENV: ${{ inputs.environment }}
+      ACTION: ${{ inputs.action }}
+      ROLLBACK_SHA: ${{ inputs.rollback_sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare immutable release and SSH
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST" && test -n "$DEPLOY_USER" && test -n "$PUBLIC_API_URL"
+          [[ "$DEPLOY_HOST" =~ ^[a-zA-Z0-9.-]+$ ]] && [[ "$DEPLOY_USER" =~ ^[a-zA-Z0-9_-]+$ ]]
+          [[ "$PUBLIC_API_URL" =~ ^https://[a-zA-Z0-9.-]+(:[0-9]+)?$ ]]
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+          git archive --format=tar.gz --output=release.tar.gz "$GITHUB_SHA"
+          sha256sum release.tar.gz > release.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backend-${{ github.sha }}
+          path: |
+            release.tar.gz
+            release.sha256
+          retention-days: 30
+      - name: Deploy or restore and verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote="$DEPLOY_USER@$DEPLOY_HOST"
+          root="/opt/quan1-$TARGET_ENV"
+          target="$GITHUB_SHA"
+          if [ "$ACTION" = rollback ]; then
+            [[ "$ROLLBACK_SHA" =~ ^[0-9a-f]{40}$ ]]
+            target="$ROLLBACK_SHA"
+          fi
+          scp -o StrictHostKeyChecking=yes deploy/release.py "$remote:$root/incoming/release-$GITHUB_SHA.py"
+          if [ "$ACTION" = deploy ]; then
+            scp -o StrictHostKeyChecking=yes release.tar.gz "$remote:$root/incoming/$GITHUB_SHA.tar.gz"
+            checksum="$(cut -d ' ' -f1 release.sha256)"
+            ssh -o StrictHostKeyChecking=yes "$remote" "python3 '$root/incoming/release-$GITHUB_SHA.py' deploy --environment '$TARGET_ENV' --release '$target' --bundle '$root/incoming/$GITHUB_SHA.tar.gz' --sha256 '$checksum' --public-url '$PUBLIC_API_URL'"
+          else
+            ssh -o StrictHostKeyChecking=yes "$remote" "python3 '$root/incoming/release-$GITHUB_SHA.py' rollback --environment '$TARGET_ENV' --release '$target' --public-url '$PUBLIC_API_URL'"
+          fi
+      - name: Record public deployment verification
+        run: python3 deploy/verify.py --url "$PUBLIC_API_URL" --report reports/deployment-verification.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deployment-check-${{ inputs.environment }}-${{ github.run_id }}
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Remove runner SSH credentials
+        if: always()
+        run: rm -f ~/.ssh/id_ed25519

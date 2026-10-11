@@ -45,7 +45,7 @@ npm.cmd run worker
 npm.cmd start
 ```
 
-Trong app kéo xuống tải lại. Chọn ngôn ngữ thuyết minh trong Cài đặt hoặc ngay trong chi tiết địa điểm. Nếu dùng offline, tải lại gói nội dung.
+Trong app kéo xuống tải lại. Chọn ngôn ngữ thuyết minh trong Cài đặt hoặc ngay trong chi tiết địa điểm. Bản 1.3 cần kết nối API; không còn gói tải offline.
 
 ## Cách làm hoàn toàn bằng pgAdmin
 
@@ -75,4 +75,4 @@ Tạo tourism, chạy setup và cài thư viện như README; db:init sẽ tạo
 
 ## Voice trên điện thoại
 
-Cài voice tiếng Việt, Anh, Trung, Pháp và Nhật trong phần Text-to-speech/Giọng nói của hệ điều hành nếu thiếu. Sau khi cài voice, tải lại app để kiểm tra danh sách giọng. TTS và khả năng offline phụ thuộc máy; chưa kiểm tra cả 5 giọng trên thiết bị thật.
+Cài voice tiếng Việt, Anh, Trung, Pháp và Nhật trong phần Text-to-speech/Giọng nói của hệ điều hành nếu thiếu. Sau khi cài voice, tải lại app để kiểm tra danh sách giọng. Danh sách giọng và chất lượng TTS phụ thuộc máy; chưa kiểm tra cả 5 giọng trên thiết bị thật.

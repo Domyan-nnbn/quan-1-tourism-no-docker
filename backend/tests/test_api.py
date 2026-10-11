@@ -4,7 +4,7 @@ os.environ.setdefault('ADMIN_PASSWORD','integration-test-only-password')
 os.environ.setdefault('SEED_DEMO','false')
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import select
+from sqlalchemy import select, text
 from app.db import Base, engine, Session
 from app.models import Admin, Content, Job, POI
 from app.security import passwords
@@ -17,13 +17,20 @@ TRANSLATIONS={'zh':'这是经过审核的中文示例解说内容，适合测试
 def client():
     # Destructive operations are restricted to a dedicated database name.
     assert engine.url.database.endswith('_test'), 'Use a DATABASE_URL ending in _test'
-    Base.metadata.drop_all(engine);Base.metadata.create_all(engine)
+    from app.services.accounts import attempts
+    attempts.clear()
+    Base.metadata.drop_all(engine)
+    with engine.begin() as db:db.execute(text('DROP TABLE IF EXISTS schema_migrations'))
+    from app.migrate import migrate
+    migrate()
     with Session.begin() as db:db.add(Admin(email=settings.admin_email,password_hash=passwords.hash(settings.admin_password)))
     with TestClient(app) as c:yield c
     Base.metadata.drop_all(engine)
 
 @pytest.fixture
 def auth(client):
+    from app.services.accounts import attempts
+    attempts.clear()
     r=client.post('/api/v1/auth/login',json={'email':settings.admin_email,'password':settings.admin_password})
     assert r.status_code==200
     return {'Authorization':'Bearer '+r.json()['access_token']}
@@ -84,11 +91,11 @@ def test_consent_enforced_and_revocation_deletes_events(client,auth):
     assert client.post('/api/v1/events',headers=h,json=event).status_code==403
     assert client.get('/api/v1/admin/analytics',headers=auth).json()['events']==[]
 
-def test_manifest_only_published(client):
-    data=client.get('/api/v1/offline/manifest').json()
-    assert data['schema']==1 and len(data['version'])==64
-    assert all(p['published_version'] and p['content'] for p in data['pois'])
-    assert data['map_offline'] is False
+def test_removed_offline_endpoint_and_online_catalog(client):
+    assert client.get('/api/v1/offline/manifest').status_code == 404
+    assert isinstance(client.get('/api/v1/pois').json(), list)
+    data=client.get('/api/v1/system/status').json()
+    assert data['checks']['database'] and data['checks']['schema']
 
 
 def test_language_migration_is_repeatable_and_preserves_content(client):

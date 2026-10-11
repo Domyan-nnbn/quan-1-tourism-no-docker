@@ -1,3 +1,5 @@
+-- Reference only: use npm.cmd run db:migrate for new and existing databases.
+-- Current operational schema additionally includes app/migrations/0002_worker_leases.sql.
 -- Initial schema for NEW databases. For existing databases use migrate_5_languages.sql.
 
 

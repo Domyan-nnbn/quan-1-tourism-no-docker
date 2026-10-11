@@ -40,7 +40,7 @@ Cài đặt → Tài khoản → Đăng nhập / Đăng ký → Tạo tài kho�
 - Khách chưa đăng nhập vẫn xem và nghe thuyết minh; bấm yêu thích sẽ mở đăng nhập.
 - Đăng xuất xóa phiên trên server và trên thiết bị, đồng thời xóa danh sách yêu thích khỏi màn hình. Dữ liệu yêu thích vẫn thuộc user trong database.
 - Yêu thích cũ chỉ lưu chung trên thiết bị không tự gán cho user nào. Bạn chọn lưu lại sau khi đăng nhập.
-- Đăng nhập, xác minh phiên, đồng bộ yêu thích và đăng xuất cần kết nối backend. Nếu mất mạng, chức năng nghe văn bản đã tải ngoại tuyến vẫn dùng được; không tự xếp hàng các thay đổi yêu thích.
+- Đăng nhập, xác minh phiên, đồng bộ yêu thích và đăng xuất cần kết nối backend. Bản 1.3 bỏ nội dung ngoại tuyến; khi lỗi mạng sẽ báo kết nối và không tự xếp hàng thay đổi yêu thích. Phiên được giữ để xác minh lại khi kết nối trở lại.
 
 ## Tài khoản admin
 
