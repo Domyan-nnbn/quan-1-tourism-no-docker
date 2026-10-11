@@ -57,31 +57,12 @@ npm.cmd run db:init
 
 Script tự tạo `backend/.venv`, dùng Python trong venv để cài packages. Không cần activate venv. Database được tạo bảng và nạp đúng 20 địa điểm minh họa. Chạy db:init lại không nhân đôi dữ liệu.
 
-## 5. Mở 3 terminal
+## 5. Mở 2 terminal
 
-Cả ba terminal đều đứng ở **thư mục gốc dự án**.
-
-**Terminal 1 — backend:**
-
-```powershell
 npm.cmd run backend
-```
 
-Kiểm tra trên máy tính: `http://localhost:8000/health/ready` phải có `status: ready`.
-
-**Terminal 2 — worker nhập Wikipedia:**
-
-```powershell
-npm.cmd run worker
-```
-
-**Terminal 3 — ứng dụng Expo:**
-
-```powershell
-npm.cmd start
-```
-
-Quét QR bằng Expo Go. iPhone có thể dùng Camera để mở QR.
+cd D:\cnpm\quan-1-tourism-no-docker\mobile
+npx.cmd expo start --clear
 
 ## 6. Kết nối điện thoại với backend
 
@@ -99,12 +80,14 @@ Nếu health trên điện thoại không mở được: kiểm tra backend, m�
 ## 7. Đăng nhập quản trị
 
 Cài đặt → Tài khoản → Đăng nhập / Đăng ký → Đăng nhập dành cho admin:
+
 - Email: `admin@quan1.local`.
 - Password: giá trị **ADMIN_PASSWORD** trong `backend/.env`.
 
 Đổi giá trị ADMIN_PASSWORD sau khi đã seed thì chạy `npm.cmd run admin:reset` để cập nhật hash tài khoản. Các phiên admin cũ được thu hồi ngay khi reset thành công.
 
 Luồng quản trị:
+
 1. Tạo/sửa POI và tọa độ/bán kính, lưu.
 2. Nhập URL Wikipedia vi/en, lưu, bấm nhập bài.
 3. Worker tạo bản trích xuất có revision; nạp nháp vào trình soạn thảo.
@@ -126,20 +109,20 @@ API Swagger: `http://localhost:8000/docs`. Bảng SQL: `docs/schema.sql`.
 
 ## Khắc phục lỗi
 
-| Lỗi | Cách xử lý |
-|---|---|
-| No suitable Python runtime | Cài Python 3.12/3.13, mở lại VS Code, chạy `py -0p`; install:backend tự chọn bản phù hợp |
+| Lỗi                                | Cách xử lý                                                                                             |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| No suitable Python runtime         | Cài Python 3.12/3.13, mở lại VS Code, chạy `py -0p`; install:backend tự chọn bản phù hợp               |
 | Access denied / WinError 5 / EPERM | Giải nén sang thư mục người dùng có quyền ghi; đóng tiến trình giữ file; không sửa quyền toàn bộ ổ đĩa |
-| password authentication failed | Sửa password/user PostgreSQL trong backend/.env, không dùng ADMIN_PASSWORD thay password DB |
-| database tourism does not exist | Tạo database tourism trong pgAdmin trước db:init |
-| Connection refused | Kiểm tra dịch vụ PostgreSQL Windows đang chạy và đúng port; API chỉ chạy sau db:init |
-| QR mở app nhưng API lỗi | Thử health bằng trình duyệt điện thoại, kiểm tra LAN IP/firewall |
-| SDK incompatible | Expo Go phải hỗ trợ SDK 57; không nâng riêng React Native tùy ý |
-| iPhone không có tiếng | Tắt silent mode, tăng media volume, kiểm tra voice Việt/Anh |
-| GPS không tự đọc | Cấp quyền, bật tự động, mở app, vào đúng radius; GPS accuracy phải ≤50m |
-| Job đứng PENDING | Mở terminal worker bằng `npm.cmd run worker` |
-| Job FAILED | Kiểm tra URL Wikipedia/mạng, thử lại hoặc nhập thủ công |
-| Admin 401 | Đăng xuất/đăng nhập lại |
+| password authentication failed     | Sửa password/user PostgreSQL trong backend/.env, không dùng ADMIN_PASSWORD thay password DB            |
+| database tourism does not exist    | Tạo database tourism trong pgAdmin trước db:init                                                       |
+| Connection refused                 | Kiểm tra dịch vụ PostgreSQL Windows đang chạy và đúng port; API chỉ chạy sau db:init                   |
+| QR mở app nhưng API lỗi            | Thử health bằng trình duyệt điện thoại, kiểm tra LAN IP/firewall                                       |
+| SDK incompatible                   | Expo Go phải hỗ trợ SDK 57; không nâng riêng React Native tùy ý                                        |
+| iPhone không có tiếng              | Tắt silent mode, tăng media volume, kiểm tra voice Việt/Anh                                            |
+| GPS không tự đọc                   | Cấp quyền, bật tự động, mở app, vào đúng radius; GPS accuracy phải ≤50m                                |
+| Job đứng PENDING                   | Mở terminal worker bằng `npm.cmd run worker`                                                           |
+| Job FAILED                         | Kiểm tra URL Wikipedia/mạng, thử lại hoặc nhập thủ công                                                |
+| Admin 401                          | Đăng xuất/đăng nhập lại                                                                                |
 
 Dừng tiến trình bằng Ctrl+C trong từng terminal. Dữ liệu PostgreSQL vẫn được giữ.
 
