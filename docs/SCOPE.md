@@ -13,7 +13,7 @@
 
 | Use case | Mức triển khai trong mã nguồn |
 |---|---|
-| UC01 bản đồ/POI | Native map, marker, vòng bán kính, tìm kiếm, lọc, khoảng cách, chỉ đường ngoài app |
+| UC01 bản đồ/POI | Leaflet/OpenStreetMap trong WebView, marker, vòng bán kính, tìm kiếm, lọc, khoảng cách, chỉ đường ngoài app |
 | UC02 GPS narration | Foreground, bán kính mặc định 30m, debounce 3s, cooldown 5 phút, fix ≤15 giây, accuracy ≤25m và ≤nửa radius, vùng sai số nằm trong radius, gần nhất trong vùng chồng nhau; không ngắt bài đang đọc; không gửi GPS lên server |
 | UC03 ngôn ngữ | UI du khách Việt/Anh, kịch bản vi/en/zh/fr/ja. UI quản trị dùng tiếng Việt |
 | Kết nối trực tuyến | Bản 1.3 bỏ UC04 tải offline và endpoint manifest. App tải nội dung từ API; dừng GPS/giọng đọc khi chuyển nền |

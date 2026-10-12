@@ -4,7 +4,7 @@ import * as Crypto from 'expo-crypto';
 import { request, body } from './api';
 import { POI, Job, Category } from './types';
 import { Button, Field, C, u } from './ui';
-function duration(text:string,locale:string){const units=['zh','ja'].includes(locale)?text.replace(/\s/g,'').length:text.trim().split(/\s+/).filter(Boolean).length;const rates:Record<string,number>={vi:150,en:140,fr:145,zh:220,ja:300};return Math.round(units/(rates[locale]||140)*60);}
+const jobNames:Record<string,string>={PENDING:'Đang chờ worker',PROCESSING:'Đang nhập bài',RETRY_PENDING:'Đang chờ thử lại',COMPLETED:'Đã tạo bản nháp',FAILED:'Nhập thất bại'};
 const blank={name:'',name_en:'',address:'',category:'heritage' as Category,latitude:'10.7769',longitude:'106.7009',radius:'30',source_url:''};
 export default function Admin({base,token,onClose,onChanged,onLogout}:{base:string;token:string;onClose:()=>void;onChanged:()=>void;onLogout:()=>void}){
  const [pois,setPois]=useState<POI[]>([]),[jobs,setJobs]=useState<Job[]>([]),[stats,setStats]=useState<any>(null),[selected,setSelected]=useState<POI|null>(null),[editing,setEditing]=useState(false);
@@ -41,7 +41,6 @@ export default function Admin({base,token,onClose,onChanged,onLogout}:{base:stri
    <View style={u.card}><Text style={u.h2}>Nội dung thuyết minh</Text><Text style={u.muted}>Nhập Wikipedia sẽ tạo bản trích xuất để bạn biên tập. Bản này chưa tích hợp AI hoặc dịch tự động.</Text>
    <Button title="Nhập bài Wikipedia → bản nháp" secondary disabled={busy||!selected.source_url} onPress={()=>action(async()=>{await api('/admin/pois/'+selected.id+'/import-wikipedia',{method:'POST',headers:{'Idempotency-Key':Crypto.randomUUID()}});await refresh();})}/>
    <Field label="Kịch bản tiếng Việt" value={vi} onChangeText={setVi} multiline/><Field label="Kịch bản tiếng Anh" value={en} onChangeText={setEn} multiline/><Field label="Kịch bản tiếng Trung (giản thể)" value={zh} onChangeText={setZh} multiline/><Field label="Kịch bản tiếng Pháp" value={fr} onChangeText={setFr} multiline/><Field label="Kịch bản tiếng Nhật" value={ja} onChangeText={setJa} multiline/>
-   <Text style={u.muted}>Thời lượng ước tính ở tốc độ chuẩn: {Object.entries({vi,en,zh,fr,ja}).map(([l,text])=>`${l.toUpperCase()} ${duration(text,l)} giây`).join(' · ')}. Hãy nghe thử; giọng và tốc độ trên máy có thể khác.</Text>
    <Button title="Lưu thành phiên bản nháp mới" disabled={busy} onPress={()=>action(async()=>{await api('/admin/pois/'+selected.id+'/drafts',{method:'POST',body:body({vi,en,zh,fr,ja})});await refresh();})}/>
    {selected.drafts?.map(d=><View key={d.id} style={{paddingTop:14,borderTopWidth:1,borderColor:C.line,gap:8}}><Text style={{fontWeight:'700',color:C.green}}>{d.state} · {d.id.slice(0,8)}</Text><Text numberOfLines={3} style={u.muted}>{d.vi||d.en}</Text><Text style={u.muted}>Nguồn: {d.source.type} {d.source.revision_id?`· revision ${d.source.revision_id}`:''}</Text>
    <Button title="Nạp vào trình soạn thảo" secondary disabled={busy} onPress={()=>{setVi(d.vi);setEn(d.en);setZh(d.zh||'');setFr(d.fr||'');setJa(d.ja||'');}}/>
@@ -54,7 +53,7 @@ export default function Admin({base,token,onClose,onChanged,onLogout}:{base:stri
    </>}
    <Button title="Về danh sách quản trị" secondary onPress={()=>setEditing(false)}/>
    </>:pois.map(p=><Pressable key={p.id} style={u.card} onPress={()=>edit(p)}><Text style={{fontSize:17,fontWeight:'700',color:C.ink}}>{p.name}</Text><Text style={u.muted}>{p.published_version?'Đang xuất bản':'Chưa xuất bản'} · {p.radius} m · {p.drafts?.length||0} phiên bản</Text></Pressable>)}
-   <Text style={u.h2}>Tác vụ Wikipedia</Text><Text style={u.muted}>Cập nhật mỗi 10 giây; cần chạy worker.</Text>{jobs.length===0&&<Text style={u.muted}>Chưa có tác vụ.</Text>}{jobs.map(j=><View key={j.id} style={u.card}><Text style={{fontWeight:'700'}}>{pois.find(p=>p.id===j.poi_id)?.name||j.poi_id}</Text><Text style={u.muted}>{j.state} · lần thử {j.attempts}</Text>{!!j.error&&<Text style={{color:C.red}}>{j.error}</Text>}{j.state==='FAILED'&&<Button title="Thử lại" secondary disabled={busy} onPress={()=>action(()=>mutate('/admin/jobs/'+j.id+'/retry'))}/>}</View>)}
+   <Text style={u.h2}>Tác vụ Wikipedia</Text><Text style={u.muted}>Cập nhật mỗi 10 giây. Nếu tác vụ chờ lâu, hãy kiểm tra worker đang chạy.</Text><Button secondary title="Làm mới tác vụ" disabled={busy} onPress={()=>action(refresh)}/>{jobs.length===0&&<Text style={u.muted}>Chưa có tác vụ.</Text>}{jobs.map(j=><View key={j.id} style={u.card}><Text style={{fontWeight:'700'}}>{pois.find(p=>p.id===j.poi_id)?.name||j.poi_id}</Text><Text style={u.muted}>{jobNames[j.state]||j.state} · lần thử {j.attempts}</Text>{j.state==='COMPLETED'&&<Text style={u.muted}>Bản nháp đã sẵn sàng. Mở địa điểm để biên tập, bổ sung ngôn ngữ và duyệt.</Text>}{!!j.error&&<Text style={{color:C.red}}>{j.error}</Text>}{j.state==='FAILED'&&<Button title="Thử lại" secondary disabled={busy} onPress={()=>action(()=>mutate('/admin/jobs/'+j.id+'/retry'))}/>}</View>)}
    </>
  </ScrollView>;
 }

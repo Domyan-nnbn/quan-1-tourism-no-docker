@@ -1,3 +1,5 @@
+> **Bản 1.3.2:** bản đồ Leaflet/OpenStreetMap trong WebView để dùng với Expo Go. Cần cài lại mobile dependencies. [Hướng dẫn](docs/UPDATE_MAP_1_3_2.md).
+
 > **Bản 1.3.0:** bỏ tải nội dung offline, GPS/giọng đọc/yêu cầu mạng chỉ hoạt động khi mở app; cải thiện kết nối, phiên tài khoản, yêu thích và xuất bản đồng thời. Nâng cấp: [docs/UPDATE_STABILITY_1_3.md](docs/UPDATE_STABILITY_1_3.md). Kiến trúc backend và CI/CD không Docker: [docs/OPERATIONS.md](docs/OPERATIONS.md).
 
 # QUẬN 1 TOURISM — 5 ngôn ngữ thuyết minh, không Docker
@@ -174,3 +176,7 @@ CI đi kèm cài PostgreSQL trực tiếp trên runner Ubuntu, không dùng Dock
 - [Hợp đồng service, component và sequence](docs/BE_SERVICES_CONTRACTS.md)
 - [Nghiệm thu CI/CD và triển khai thật](docs/CICD_ACCEPTANCE.md)
 - [Kết quả bổ sung BE/CI/CD](docs/VERIFICATION_BE_CICD.md)
+
+## Cập nhật 1.3.1
+
+Xem [hướng dẫn cập nhật source, GPS/bản đồ và cấu hình APK](docs/UPDATE_LOCAL_1_3_1.md). Không cần migration mới; giữ nguyên `.env` và database hiện có.

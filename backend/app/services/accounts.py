@@ -23,7 +23,7 @@ def throttle(request, kind):
         while times and times[0] < now_m - 60:
             times.popleft()
         if len(times) >= 10:
-            raise HTTPException(429, 'Too many attempts; wait one minute / Thử lại sau một phút')
+            raise HTTPException(429, 'Too many attempts; please wait and retry / Vui lòng chờ rồi thử lại')
         times.append(now_m)
 
 def login(body, request, db):

@@ -8,7 +8,7 @@ export function isPaused(error:unknown){return error instanceof ApiError&&error.
 function httpMessage(status:number,detail:unknown):string{
  if(status===530)return 'Backend tunnel không hoạt động. Kiểm tra URL HTTPS và cloudflared / Backend tunnel is unavailable.';
  if(status===502||status===503||status===504)return 'Backend chưa sẵn sàng. Kiểm tra API, database và worker / Backend is not ready.';
- if(status===429)return 'Quá nhiều yêu cầu. Chờ một phút rồi thử lại / Wait one minute and retry.';
+ if(status===429)return 'Quá nhiều yêu cầu. Vui lòng chờ rồi thử lại / Please wait and retry.';
  if(status>=500)return 'Máy chủ gặp lỗi. Thử lại sau / Server error. Please retry.';
  if(typeof detail==='string')return detail;
  if(Array.isArray(detail))return detail.map((e:any)=>`${e.loc?.join('.')||''}: ${e.msg||''}`).join('\n');
