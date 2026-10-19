@@ -41,7 +41,9 @@
 - Có mã CD/rollback, log và metrics trong tiến trình; chưa triển khai staging/production thật, load test, observability stack và security scan chuyên sâu.
 - CI có sẵn nhưng chưa được chạy trên tài khoản GitHub của bạn.
 - Rate limit login hiện ở bộ nhớ một API process; dùng shared limiter khi chạy nhiều instance.
+- Bộ đếm lượt nghe ẩn danh được giới hạn 60 yêu cầu/phút theo địa chỉ client trong từng API process; khi chạy nhiều instance cần cấu hình giới hạn dùng chung ở reverse proxy/API gateway. Chỉ tính được lúc thiết bị liên lạc được backend.
 - Có thu hồi phiên server-side và đổi mật khẩu; chưa có refresh-token rotation hoặc quên mật khẩu qua email.
+- Người dùng có thể tự xóa tài khoản sau khi xác nhận mật khẩu; xác minh email và khôi phục tài khoản qua email vẫn cần cấu hình dịch vụ gửi thư.
 - Không lưu tọa độ GPS nhưng server hạ tầng vẫn có thể có IP trong access logs; cần retention policy khi triển khai.
 - 20 POI minh họa không phải bộ nội dung production đã được kiểm chứng. Vị trí pin/cổng vào và phạm vi địa lý cần khảo sát.
 

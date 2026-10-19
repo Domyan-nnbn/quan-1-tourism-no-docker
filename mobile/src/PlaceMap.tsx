@@ -32,7 +32,7 @@ export default function PlaceMap({mapRef,pois,locale,position,onSelect,onList}:{
  }
  return <View style={{flex:1,minHeight:180}}>
   {active&&<WebView key={attempt} ref={web} source={source} originWhitelist={['*']} javaScriptEnabled
-   style={{flex:1,backgroundColor:C.bg}} applicationNameForUserAgent="Quan1Tourism/1.3.2"
+   style={{flex:1,backgroundColor:C.bg}} applicationNameForUserAgent="Quan1Tourism/1.3.3"
    cacheEnabled geolocationEnabled={false} mixedContentMode="never" setSupportMultipleWindows={false}
    onMessage={event=>receive(event.nativeEvent.data)} onError={()=>setProblem(true)} onHttpError={()=>setProblem(true)}
    onContentProcessDidTerminate={retry} onRenderProcessGone={retry}

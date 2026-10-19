@@ -16,6 +16,8 @@ class POIInput(BaseModel):
     longitude: float = Field(ge=-180, le=180)
     radius: int = Field(default=30, ge=10, le=500)
     source_url: str = Field(default='', max_length=1000)
+    image_url: str = Field(default='', max_length=2000)
+    opening_hours: str = Field(default='', max_length=1000)
 
     @field_validator('name','name_en','address')
     @classmethod
@@ -32,6 +34,15 @@ class POIInput(BaseModel):
             raise ValueError('Use https://vi.wikipedia.org/wiki/... or https://en.wikipedia.org/wiki/...')
         return v
 
+    @field_validator('image_url')
+    @classmethod
+    def safe_image_url(cls, v):
+        if not v: return v
+        u = urlsplit(v)
+        if u.scheme not in ('https', 'http') or not u.netloc:
+            raise ValueError('Image URL must use http(s)')
+        return v
+
 class DraftInput(BaseModel):
     vi: str = Field(min_length=20, max_length=12000)
     en: str = Field(default='', max_length=12000)
@@ -46,7 +57,7 @@ class ConsentInput(BaseModel):
 class EventInput(BaseModel):
     id: UUID
     poi_id: UUID
-    kind: Literal['narration_started','narration_completed']
+    kind: Literal['narration_started','narration_completed','narration_error']
     locale: Literal['vi','en','zh','fr','ja']
 
 class Register(BaseModel):
@@ -71,3 +82,15 @@ class Register(BaseModel):
 class ChangePassword(BaseModel):
     current_password: str = Field(min_length=1, max_length=200)
     new_password: str = Field(min_length=8, max_length=200)
+
+class DeleteAccount(BaseModel):
+    current_password: str = Field(min_length=1, max_length=200)
+
+class UserLockInput(BaseModel):
+    locked: bool
+
+class AdminSettingsInput(BaseModel):
+    default_language: Literal['vi','en'] = 'vi'
+    gps_accuracy_m: int = Field(default=25, ge=5, le=25)
+    activation_dwell_seconds: int = Field(default=3, ge=1, le=30)
+    repeat_cooldown_minutes: int = Field(default=5, ge=1, le=120)

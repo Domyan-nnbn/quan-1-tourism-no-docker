@@ -20,9 +20,9 @@ def audit(db, admin, action, target):
     persistence.add(db, Audit(admin_id=admin.id, action=action, target=target))
 
 def serialize(db, p, admin=False):
-    result = {k: getattr(p, k) for k in ['id', 'name', 'name_en', 'category', 'address', 'latitude', 'longitude', 'radius', 'source_url', 'published_version']}
+    result = {k: getattr(p, k) for k in ['id', 'name', 'name_en', 'category', 'address', 'latitude', 'longitude', 'radius', 'source_url', 'image_url', 'opening_hours', 'listen_count', 'published_version']}
     c = persistence.get(db, Content, p.published_version) if p.published_version else None
     result['content'] = {'vi': c.vi, 'en': c.en, 'zh': c.zh, 'fr': c.fr, 'ja': c.ja, 'source': c.source, 'version': c.id} if c else None
     if admin:
-        result['drafts'] = [{'id': v.id, 'vi': v.vi, 'en': v.en, 'zh': v.zh, 'fr': v.fr, 'ja': v.ja, 'state': v.state, 'source': v.source, 'created_at': v.created_at.isoformat()} for v in repo.content_versions(db, p)]
+        result['drafts'] = [{'id': v.id, 'vi': v.vi, 'en': v.en, 'zh': v.zh, 'fr': v.fr, 'ja': v.ja, 'state': v.state, 'source': v.source, 'reviewed_by':v.reviewed_by, 'created_at': v.created_at.isoformat()} for v in repo.content_versions(db, p)]
     return result

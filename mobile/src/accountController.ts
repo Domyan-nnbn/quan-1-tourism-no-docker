@@ -88,6 +88,18 @@ export class AccountController{
   }catch(error){if(epoch===this.epoch)this.error(error);}
   finally{this.mutating=false;if(epoch===this.epoch)this.update({pending:false});}
  }
+ async deleteAccount(password:string):Promise<boolean>{
+  const session=this.state.session,epoch=this.epoch;
+  if(!session||session.account.role!=='user'||this.mutating)return false;
+  this.mutating=true;this.update({pending:true});
+  try{
+   await this.deps.request(session.base,'/session/delete-account',
+    {method:'POST',body:JSON.stringify({current_password:password})},session.access_token);
+   await this.clear(epoch);
+   return true;
+  }catch(error){if(epoch===this.epoch)this.error(error);return false;}
+  finally{this.mutating=false;if(epoch===this.epoch)this.update({pending:false});}
+ }
  async forget(){await this.clear(this.epoch);}
  async toggle(id:string){
   const session=this.state.session,epoch=this.epoch;

@@ -21,7 +21,10 @@ export async function request<T>(base:string,path:string,options:RequestInit={},
  const timer=setTimeout(()=>controller.abort(),12000);
  const abort=()=>controller.abort();options.signal?.addEventListener('abort',abort,{once:true});
  if(options.signal?.aborted)controller.abort();
- const canRetry=(options.method||'GET').toUpperCase()==='GET';
+ const replaySafeListen=(options.method||'GET').toUpperCase()==='POST'
+   && /^\/pois\/[^/]+\/listen$/.test(path)
+   && Boolean(new Headers(options.headers).get('X-Listen-ID'));
+ const canRetry=(options.method||'GET').toUpperCase()==='GET'||replaySafeListen;
  try{
   for(let attempt=0;attempt<(canRetry?2:1);attempt++){
    try{

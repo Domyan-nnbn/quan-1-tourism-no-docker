@@ -34,6 +34,10 @@ def current_session(credentials: HTTPAuthorizationCredentials | None = Depends(b
     session = db.get(AuthSession, hashlib.sha256(credentials.credentials.encode()).hexdigest())
     if not session or session.expires_at <= now():
         raise HTTPException(401,'Session expired; please sign in / Phiên hết hạn, hãy đăng nhập lại')
+    if session.role == 'user':
+        user = db.get(User, session.user_id)
+        if not user or user.locked:
+            raise HTTPException(403, 'Account is locked / Tài khoản đã bị khóa')
     return session
 
 def require_admin(session=Depends(current_session), db=Depends(get_db)):

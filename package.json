@@ -1,7 +1,7 @@
 {
   "name": "quan-1-tourism",
   "private": true,
-  "version": "1.3.2",
+  "version": "1.3.3",
   "scripts": {
     "setup": "node scripts/setup.mjs",
     "install:apps": "npm ci --prefix mobile",
@@ -10,11 +10,15 @@
     "install:backend": "node scripts/backend.mjs install",
     "db:init": "node scripts/backend.mjs seed",
     "backend": "node scripts/backend.mjs api",
+    "start:cloudflare": "node scripts/cloudflare-expo.mjs",
     "worker": "node scripts/backend.mjs worker",
     "admin:reset": "node scripts/backend.mjs reset",
     "db:migrate": "node scripts/backend.mjs migrate",
     "db:demo-translations": "node scripts/backend.mjs translations",
-    "db:accounts": "node scripts/backend.mjs accounts"
+    "db:accounts": "node scripts/backend.mjs accounts",
+    "db:prune-listens": "node scripts/backend.mjs prune",
+    "pack:safe": "python scripts/package_clean.py",
+    "doctor": "node scripts/doctor.mjs"
   },
   "engines": {
     "node": ">=22.13.0"

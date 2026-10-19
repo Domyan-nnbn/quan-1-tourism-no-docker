@@ -3,7 +3,8 @@ from collections import defaultdict, deque
 from time import monotonic
 from threading import Lock
 from fastapi import HTTPException
-from ..models import Admin, User
+from ..models import Admin, User, AuthSession, Audit, now
+from sqlalchemy import select
 from ..security import passwords, verify_password, create_session, account_info
 
 from ..repositories import accounts as repo
@@ -50,9 +51,26 @@ def user_login(body, request, db):
     user = repo.find_user(db, body)
     if not verify_password(body.password, user.password_hash if user else None):
         raise HTTPException(401, 'Email or password is incorrect / Email hoặc mật khẩu không đúng')
+    if user.locked:
+        raise HTTPException(403, 'Account is locked / Tài khoản đã bị khóa')
     result = create_session(db, user, 'user')
     db.commit()
     return result
+
+def admin_users(db):
+    return [{'id':u.id,'name':u.name,'email':u.email,'locked':u.locked,'created_at':u.created_at.isoformat()}
+            for u in db.scalars(select(User).order_by(User.created_at.desc()))]
+
+def set_user_lock(id, locked, admin, db):
+    user=db.scalar(select(User).where(User.id==id).with_for_update())
+    if not user: raise HTTPException(404,'User not found')
+    user.locked=locked
+    if locked:
+        from sqlalchemy import delete
+        db.execute(delete(AuthSession).where(AuthSession.user_id==id))
+    db.add(Audit(admin_id=admin.id,action='lock_user' if locked else 'unlock_user',target=id,created_at=now()))
+    db.commit()
+    return {'id':user.id,'locked':user.locked}
 
 def me(session, db):
     account = persistence.get(db, User, session.user_id) if session.role == 'user' else persistence.get(db, Admin, session.admin_id)
@@ -84,3 +102,15 @@ def change_password(body, request, session, db):
     repo.revoke_other_sessions(db, session.role, identity, session.id)
     db.commit()
     return {'ok': True, 'other_sessions_revoked': True}
+
+def delete_account(body, session, db):
+    if session.role != 'user':
+        raise HTTPException(403, 'Only user accounts can be deleted here')
+    account = persistence.locked(db, User, session.user_id)
+    fresh = repo.find_session(db, session.id)
+    if not fresh:
+        raise HTTPException(401, 'Session revoked; please sign in again')
+    if not account or not verify_password(body.current_password, account.password_hash):
+        raise HTTPException(401, 'Current password is incorrect / Mật khẩu hiện tại không đúng')
+    db.delete(account)
+    db.commit()

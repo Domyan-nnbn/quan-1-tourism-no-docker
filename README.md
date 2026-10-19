@@ -1,3 +1,5 @@
+> **Bản 1.3.3 — tích hợp bảo mật và trải nghiệm:** chống đếm trùng lượt nghe (PostgreSQL), hiển thị ảnh và giờ mở cửa chi tiết, cảnh báo độ dài kịch bản 5 ngôn ngữ, kiểm tra môi trường và đóng gói ZIP an toàn. [Hướng dẫn nâng cấp](docs/INTEGRATION_1_3_3.md).
+
 > **Bản 1.3.2:** bản đồ Leaflet/OpenStreetMap trong WebView để dùng với Expo Go. Cần cài lại mobile dependencies. [Hướng dẫn](docs/UPDATE_MAP_1_3_2.md).
 
 > **Bản 1.3.0:** bỏ tải nội dung offline, GPS/giọng đọc/yêu cầu mạng chỉ hoạt động khi mở app; cải thiện kết nối, phiên tài khoản, yêu thích và xuất bản đồng thời. Nâng cấp: [docs/UPDATE_STABILITY_1_3.md](docs/UPDATE_STABILITY_1_3.md). Kiến trúc backend và CI/CD không Docker: [docs/OPERATIONS.md](docs/OPERATIONS.md).
@@ -102,6 +104,8 @@ Nếu health trên điện thoại không mở được: kiểm tra backend, m�
 
 ## 7. Đăng nhập quản trị
 
+Dashboard mới cần cập nhật schema trước lần chạy đầu sau khi lấy mã nguồn: dừng API/worker, sao lưu database, chạy `npm.cmd run db:migrate`, rồi khởi động lại. Migration `0004_poi_listen_count.sql` bổ sung bộ đếm lượt nghe; `0005_listen_sessions.sql` hỗ trợ chống đếm trùng khi yêu cầu gửi lại. Luôn sao lưu database trước khi nâng cấp.
+
 Cài đặt → Tài khoản → Đăng nhập / Đăng ký → Đăng nhập dành cho admin:
 - Email: `admin@quan1.local`.
 - Password: giá trị **ADMIN_PASSWORD** trong `backend/.env`.
@@ -124,7 +128,8 @@ API Swagger: `http://localhost:8000/docs`. Bảng SQL: `docs/schema.sql`.
 - GPS chỉ khi app ở foreground; bỏ fix cũ trên 15 giây, sai số không rõ hoặc trên 25m. Tự đọc khi vùng sai số nằm trong radius, giữ 3 giây, cooldown 5 phút.
 - Thuyết minh bằng giọng có trên thiết bị, có dừng, chọn giọng theo từng ngôn ngữ và đổi tốc độ.
 - Cần kết nối backend để tải danh sách và nghe; không có gói tải về. Chuyển nền/khóa màn hình sẽ dừng giọng đọc và GPS. Có đổi mật khẩu cho user/admin.
-- Admin CRUD, phiên bản nội dung, duyệt/publish, worker Wikipedia, analytics có consent.
+- Dashboard admin: tổng quan địa điểm/nội dung/lượt nghe, bản đồ và cảnh báo vùng kích hoạt chồng lấn; CRUD/ẩn địa điểm, ảnh qua URL, giờ mở cửa; biên tập 5 ngôn ngữ, duyệt/xuất bản, người dùng và khóa tài khoản, cấu hình geofence, audit và theo dõi API/worker.
+- Bộ đếm lượt nghe lưu số tổng hợp theo địa điểm mỗi khi TTS bắt đầu, chống đếm lại cùng mã lượt phát UUID (thời gian lưu mã 45 ngày khi chạy lịch dọn), không gắn tài khoản và không phụ thuộc tùy chọn analytics. Các sự kiện chi tiết như hoàn tất/lỗi/ngôn ngữ vẫn chỉ gửi khi người dùng đồng ý analytics. Admin đếm lượt yêu thích trực tiếp từ danh sách yêu thích theo tài khoản. TTS trong app và nghe thử giọng trên thiết bị; bản hiện tại chưa lưu audio đã tạo/tải lên hoặc có phân quyền editor riêng.
 
 Đây là **pilot**, chưa có AI tự biên soạn/dịch, Neural TTS server, MP3 hay offline map. Không cần API key AI để chạy. 20 POI là nội dung demo, chưa phải dữ liệu đã kiểm duyệt production. Ứng dụng không đăng ký GPS hay phát thuyết minh chạy nền.
 
@@ -144,6 +149,12 @@ API Swagger: `http://localhost:8000/docs`. Bảng SQL: `docs/schema.sql`.
 | Job đứng PENDING | Mở terminal worker bằng `npm.cmd run worker` |
 | Job FAILED | Kiểm tra URL Wikipedia/mạng, thử lại hoặc nhập thủ công |
 | Admin 401 | Đăng xuất/đăng nhập lại |
+
+Chẩn đoán cấu hình và kết nối backend (trong khi API chạy): `npm.cmd run doctor`.
+
+Xóa UUID chống đếm trùng đã quá 45 ngày (không xóa tổng số lượt nghe), nên lên lịch chạy mỗi ngày: `npm.cmd run db:prune-listens`.
+
+Đóng gói bản ZIP mã nguồn **không chứa .env / mật khẩu / thư viện cài sẵn**: `python scripts/package_clean.py`.
 
 Dừng tiến trình bằng Ctrl+C trong từng terminal. Dữ liệu PostgreSQL vẫn được giữ.
 

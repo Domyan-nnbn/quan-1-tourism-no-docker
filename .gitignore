@@ -8,3 +8,11 @@ __pycache__/
 .pytest_cache/
 *.pyc
 *.log
+.env.*
+!.env.example
+*.sqlite
+*.sqlite3
+*.pem
+*.key
+*.p12
+reports/

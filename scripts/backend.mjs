@@ -24,7 +24,7 @@ if(mode==='install'){
 }else{
  if(!fs.existsSync(python)){console.error('Run npm run install:backend first.');process.exit(1);}
  if(!fs.existsSync(path.join(cwd,'.env'))){console.error('Run npm run setup, then configure backend/.env first.');process.exit(1);}
- const commands={accounts:['-m','app.migrate'],translations:['-m','app.import_demo_translations'],migrate:['-m','app.migrate'],seed:['-m','app.seed'],api:['-m','uvicorn','app.main:app','--host','0.0.0.0','--port','8000'],worker:['-m','app.worker'],reset:['-m','app.reset_admin']};
+ const commands={accounts:['-m','app.migrate'],translations:['-m','app.import_demo_translations'],migrate:['-m','app.migrate'],seed:['-m','app.seed'],api:['-m','uvicorn','app.main:app','--host','0.0.0.0','--port','8000'],worker:['-m','app.worker'],reset:['-m','app.reset_admin'],prune:['-m','app.prune_listens']};
  if(!commands[mode]){console.error('Use install, seed, api, worker or reset.');process.exit(1);}
  run(python,commands[mode]);
 }

@@ -15,7 +15,7 @@ class Admin(Base):
 
 class POI(Base):
     __tablename__ = 'pois'
-    __table_args__ = (CheckConstraint('latitude BETWEEN -90 AND 90'), CheckConstraint('longitude BETWEEN -180 AND 180'), CheckConstraint('radius BETWEEN 10 AND 500'))
+    __table_args__ = (CheckConstraint('latitude BETWEEN -90 AND 90'), CheckConstraint('longitude BETWEEN -180 AND 180'), CheckConstraint('radius BETWEEN 10 AND 500'), CheckConstraint('listen_count >= 0'))
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
     name: Mapped[str] = mapped_column(String(150))
     name_en: Mapped[str] = mapped_column(String(150))
@@ -25,9 +25,18 @@ class POI(Base):
     longitude: Mapped[float] = mapped_column(Float)
     radius: Mapped[int] = mapped_column(Integer, default=30)
     source_url: Mapped[str] = mapped_column(Text, default='')
+    image_url: Mapped[str] = mapped_column(Text, default='')
+    opening_hours: Mapped[str] = mapped_column(Text, default='')
+    listen_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default='0')
     published_version: Mapped[str | None] = mapped_column(ForeignKey('content_versions.id', use_alter=True, name='fk_poi_published_version'), nullable=True)
     archived: Mapped[bool] = mapped_column(Boolean, default=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
+
+class ListenSession(Base):
+    __tablename__ = 'listen_sessions'
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    poi_id: Mapped[str] = mapped_column(ForeignKey('pois.id', ondelete='CASCADE'))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 class Content(Base):
     __tablename__ = 'content_versions'
@@ -94,7 +103,13 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(254), unique=True)
     name: Mapped[str] = mapped_column(String(100))
     password_hash: Mapped[str] = mapped_column(Text)
+    locked: Mapped[bool] = mapped_column(Boolean, default=False, server_default='false')
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+class AppSetting(Base):
+    __tablename__ = 'app_settings'
+    key: Mapped[str] = mapped_column(String(80), primary_key=True)
+    value: Mapped[dict] = mapped_column(JSON, nullable=False)
 
 class AuthSession(Base):
     __tablename__ = 'auth_sessions'

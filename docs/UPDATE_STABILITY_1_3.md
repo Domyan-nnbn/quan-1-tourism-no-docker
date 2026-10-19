@@ -21,23 +21,20 @@ Schema vẫn là `0002_worker_leases`; migration xác nhận checksum và cấu 
 
 ## Chạy bằng Wi-Fi khác hoặc 4G
 
-Giữ bốn terminal mở nếu dùng API trên máy tính và Expo Go:
+Giữ ba terminal mở nếu dùng API trên máy tính và Expo Go:
 
 ```powershell
 # Terminal 1, tại thư mục gốc
 npm.cmd run backend
 # Terminal 2, tại thư mục gốc
 npm.cmd run worker
-# Terminal 3
-cloudflared tunnel --url http://localhost:8000
-# Terminal 4
-cd D:\cnpm\quan-1-tourism-no-docker\mobile
-npx.cmd expo start --tunnel --clear
+# Terminal 3: tự tạo API tunnel và điền URL mới vào app
+npm.cmd run start:cloudflare
 ```
 
 `@expo/ngrok` đã có trong devDependencies của mobile để Expo tìm được tại dự án. Nếu vẫn lỗi tunnel, gửi log mới; tunnel còn phụ thuộc mạng và dịch vụ bên ngoài.
 
-Lấy URL HTTPS **vừa được cloudflared in ra**, mở `<URL>/health/ready` trên điện thoại để kiểm tra rồi nhập URL gốc vào Cài đặt → Địa chỉ backend. Không thêm `/health/ready` vào ô API URL. Expo tunnel chỉ chuyển tải mã app; Cloudflare tunnel mới chuyển tải API. Đóng tunnel/máy tính ngủ sẽ ngắt API. URL quick tunnel cũ không được coi là cố định.
+Lệnh `npm.cmd run start:cloudflare` tự đợi Cloudflare Quick Tunnel cấp URL HTTPS rồi khởi chạy Expo với địa chỉ đó làm backend; không cần nhập lại URL trong app. API và worker vẫn phải chạy ở hai terminal riêng. Expo tunnel chỉ chuyển tải mã app; Cloudflare tunnel mới chuyển tải API. Đóng tunnel/máy tính ngủ sẽ ngắt API. Quick Tunnel cấp URL mới mỗi lần, nên app xóa phiên đăng nhập cũ gắn với URL trước đó và cần đăng nhập lại.
 
 ## Tự điền và cố định máy chủ
 

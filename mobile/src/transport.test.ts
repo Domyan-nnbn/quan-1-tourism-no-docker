@@ -32,3 +32,15 @@ test('invalid success response is classified without replaying mutations',async(
  try{globalThis.fetch=async()=>{calls++;return new Response('<html>');};await assert.rejects(request(base,'/user-auth/login',{method:'POST'}),(e:unknown)=>e instanceof ApiError&&e.code==='FORMAT');assert.equal(calls,1);}
  finally{globalThis.fetch=original;}
 });
+
+test('Listen POST retries transient network failure ONLY with a stable X-Listen-ID',async()=>{
+ const original=globalThis.fetch;let calls=0;const headers:{[key:string]:string}={'X-Listen-ID':'3d7a4ac1-feca-4fb9-a3a7-42a3c7440901'};
+ try{
+  globalThis.fetch=async()=>{calls++;if(calls===1)throw new TypeError('timeout');return new Response('{"ok":true,"counted":true}',{status:202,headers:{'Content-Type':'application/json'}});};
+  assert.deepEqual(await request(base,'/pois/test-id/listen',{method:'POST',headers}),{ok:true,counted:true});
+  assert.equal(calls,2);
+  calls=0;globalThis.fetch=async()=>{calls++;throw new TypeError('network');};
+  await assert.rejects(request(base,'/pois/test-id/listen',{method:'POST'}));
+  assert.equal(calls,1);
+ }finally{globalThis.fetch=original;}
+});

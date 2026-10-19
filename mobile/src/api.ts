@@ -4,6 +4,7 @@ import * as SecureStore from 'expo-secure-store';
 export {request,ApiError,setNetworkActive,isPaused} from './transport';
 export const CONFIGURED_API=(process.env.EXPO_PUBLIC_API_URL||'').trim().replace(/\/+$/,'');
 export const API_LOCKED=process.env.EXPO_PUBLIC_API_LOCKED==='true'&&!!CONFIGURED_API;
+export const API_AUTO=process.env.EXPO_PUBLIC_API_AUTO==='true'&&!!CONFIGURED_API;
 export const DEFAULT_API=initialApi(CONFIGURED_API,NativeModules.SourceCode?.scriptURL);
 export const body=(value:unknown)=>JSON.stringify(value);
 export const vault={get:(key:string)=>SecureStore.getItemAsync(key),set:(key:string,value:string)=>SecureStore.setItemAsync(key,value),remove:(key:string)=>SecureStore.deleteItemAsync(key)};

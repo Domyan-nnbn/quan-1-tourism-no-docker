@@ -17,5 +17,5 @@ export function useAccount(base:string,ready:boolean,onError:(message:string)=>v
   return ()=>{listener.remove();controller.cancel();};
  },[base,ready,controller]);
  return {...state,accept:controller.accept.bind(controller),logout:controller.logout.bind(controller),
-  toggle:controller.toggle.bind(controller),forget:controller.forget.bind(controller),refresh:controller.refresh.bind(controller)};
+  deleteAccount:controller.deleteAccount.bind(controller),toggle:controller.toggle.bind(controller),forget:controller.forget.bind(controller),refresh:controller.refresh.bind(controller)};
 }

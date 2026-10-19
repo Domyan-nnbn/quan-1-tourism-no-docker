@@ -69,10 +69,11 @@ Lệnh chuẩn duy nhất là `npm.cmd run db:migrate` / `python -m app.migrate`
 
 - `0001_baseline.sql`: tạo database mới hoặc tiếp nhận schema cũ được hỗ trợ; bổ sung bảng tài khoản và cột năm ngôn ngữ nếu chưa có.
 - `0002_worker_leases.sql`: thêm ownership/lease job và heartbeat worker.
+- `0003_admin_dashboard.sql`: thêm ảnh/giờ mở cửa POI, khóa người dùng và cấu hình app.
 - `schema_migrations`: version, checksum SHA-256 của SQL đã chuẩn hóa newline, thời điểm áp dụng.
 - Khóa advisory transaction ngăn hai tiến trình migrate cùng lúc. Tất cả migration chưa chạy được áp dụng trong một transaction.
 - Chạy lại không thực thi migration đã ghi. Nếu SQL đã áp dụng bị sửa, revision lạ hoặc schema thiếu/sai cột, runner dừng thay vì tự đoán cách sửa.
-- Không chỉnh nội dung `0001`, `0002` sau khi triển khai. Thay đổi mới phải tạo `0003_...sql` và cập nhật ORM tương ứng.
+- Không chỉnh nội dung migration đã áp dụng. Thay đổi mới phải tạo migration tiếp theo và cập nhật ORM tương ứng.
 - Không tự migrate hay seed lúc API nhận request. Seed khởi tạo gọi migration trước, nhưng vẫn là lệnh quản trị riêng.
 
 Không có auto-down migration xóa dữ liệu. Với thay đổi phá tương thích, phải lên kế hoạch sao lưu/khôi phục và maintenance window. Kiểm tra schema tập trung bảng, tên/loại/nullability cột và migration checksum; chưa phải công cụ phát hiện mọi loại drift của index, trigger hoặc quyền PostgreSQL.
