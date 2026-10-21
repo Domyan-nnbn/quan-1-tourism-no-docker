@@ -76,8 +76,19 @@ class POIInput(BaseModel):
             raise ValueError('Image URL must use http(s)')
         return v
 
+class WikipediaImportInput(BaseModel):
+    source_url: str = Field(min_length=20, max_length=1000)
+
+    @field_validator('source_url')
+    @classmethod
+    def wiki_only(cls, v):
+        u = urlsplit(v)
+        if u.scheme != 'https' or u.netloc not in ('vi.wikipedia.org','en.wikipedia.org') or not u.path.startswith('/wiki/') or len(u.path)<=6 or u.query or u.fragment:
+            raise ValueError('Use https://vi.wikipedia.org/wiki/... or https://en.wikipedia.org/wiki/...')
+        return v
+
 class DraftInput(BaseModel):
-    vi: str = Field(min_length=20, max_length=12000)
+    vi: str = Field(default='', max_length=12000)
     en: str = Field(default='', max_length=12000)
     zh: str = Field(default='', max_length=12000)
     fr: str = Field(default='', max_length=12000)

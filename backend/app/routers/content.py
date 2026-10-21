@@ -1,10 +1,15 @@
 from fastapi import Depends, Header, APIRouter
 from ..db import get_db
-from ..schemas import DraftInput
+from ..schemas import DraftInput, WikipediaImportInput
 from ..security import require_admin
 
 from ..services import content as service
+from ..services.wikipedia_import import import_from_wikipedia
 router = APIRouter()
+
+@router.post('/api/v1/admin/wikipedia/import')
+def import_wikipedia_url(body: WikipediaImportInput, admin=Depends(require_admin), db=Depends(get_db)):
+    return import_from_wikipedia(source_url=body.source_url, admin=admin, db=db)
 
 @router.post('/api/v1/admin/pois/{id}/drafts', status_code=201)
 def draft(id: str, body: DraftInput, admin=Depends(require_admin), db=Depends(get_db)):
