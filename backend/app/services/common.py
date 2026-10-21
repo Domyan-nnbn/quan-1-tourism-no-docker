@@ -20,7 +20,7 @@ def audit(db, admin, action, target):
     persistence.add(db, Audit(admin_id=admin.id, action=action, target=target))
 
 def serialize(db, p, admin=False):
-    result = {k: getattr(p, k) for k in ['id', 'name', 'name_en', 'category', 'address', 'latitude', 'longitude', 'radius', 'source_url', 'image_url', 'opening_hours', 'listen_count', 'published_version']}
+    result = {k: getattr(p, k) for k in ['id', 'name', 'name_en', 'category', 'address', 'latitude', 'longitude', 'radius', 'geofence_type', 'polygon_coordinates', 'exit_buffer_m', 'dwell_seconds', 'gps_accuracy_threshold_m', 'source_url', 'image_url', 'opening_hours', 'listen_count', 'published_version']}
     c = persistence.get(db, Content, p.published_version) if p.published_version else None
     result['content'] = {'vi': c.vi, 'en': c.en, 'zh': c.zh, 'fr': c.fr, 'ja': c.ja, 'source': c.source, 'version': c.id} if c else None
     if admin:

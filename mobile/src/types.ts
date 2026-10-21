@@ -4,6 +4,6 @@ export type Scripts = Record<NarrationLocale, string>;
 export type Category = 'heritage' | 'culture' | 'landmark' | 'food' | 'nature';
 export type Source = { type?: string; url?: string; revision_url?: string; revision_id?: number; license?: string; notice?: string; is_modified?: boolean };
 export type Draft = Scripts & { id: string; state: string; source: Source; created_at: string };
-export type POI = { id: string; name: string; name_en: string; category: Category; address: string; latitude: number; longitude: number; radius: number; source_url: string; image_url?: string; opening_hours?: string; listen_count: number; favorite_count?: number; published_version: string | null; content: Scripts & { source: Source; version: string } | null; drafts?: Draft[] };
+export type POI = { id: string; name: string; name_en: string; category: Category; address: string; latitude: number; longitude: number; radius: number; geofence_type?: 'circle'|'polygon'; polygon_coordinates?: [number,number][]|null; exit_buffer_m?: number; dwell_seconds?: number; gps_accuracy_threshold_m?: number; source_url: string; image_url?: string; opening_hours?: string; listen_count: number; favorite_count?: number; published_version: string | null; content: Scripts & { source: Source; version: string } | null; drafts?: Draft[] };
 export type Position = { latitude: number; longitude: number; accuracy?: number | null };
 export type Job = { id: string; poi_id: string; state: string; attempts: number; error: string; content_id: string | null };

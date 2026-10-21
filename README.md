@@ -1,3 +1,5 @@
+> **Bản 1.3.4 — Adaptive Geofencing:** cấu hình vùng tròn/đa giác, GPS uncertainty, dwell, exit buffer theo từng địa điểm. [Hướng dẫn](docs/ADAPTIVE_GEOFENCE_1_3_4.md).
+
 > **Bản 1.3.3 — tích hợp bảo mật và trải nghiệm:** chống đếm trùng lượt nghe (PostgreSQL), hiển thị ảnh và giờ mở cửa chi tiết, cảnh báo độ dài kịch bản 5 ngôn ngữ, kiểm tra môi trường và đóng gói ZIP an toàn. [Hướng dẫn nâng cấp](docs/INTEGRATION_1_3_3.md).
 
 > **Bản 1.3.2:** bản đồ Leaflet/OpenStreetMap trong WebView để dùng với Expo Go. Cần cài lại mobile dependencies. [Hướng dẫn](docs/UPDATE_MAP_1_3_2.md).
